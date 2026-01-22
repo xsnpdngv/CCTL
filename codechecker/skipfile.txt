@@ -1,0 +1,8 @@
+# CodeChecker reads the skipfile from top to bottom and stops at the first
+# matching pattern when deciding whether or not a file should be analyzed.
+
+-*utest*
+-*/lib/*/v*/*test.c
+-*/lib/*/*test.c
+-*/module/*/*test.c
+-*/smgr/*/*test.c

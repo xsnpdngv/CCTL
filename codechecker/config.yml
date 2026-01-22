@@ -1,0 +1,48 @@
+analyzer:
+
+  - --enable=gcc  # GCC Static Analyser
+
+  # Enable profiles
+  - --enable=profile:default  # High-quality standard checks with a low false positive rate.
+  - --enable=profile:sensitive  # Default checks + more comprehensive checks with a low false positive rate.
+  #- --enable=profile:security  # Checkers that warn for potentially vulnerable code. Contains all SEI Cert C/C++ rules.
+  - --enable=profile:portability  # Checks that aim to detect code issues emerging from platform differences (eg. between 32/64-bit architectures).
+  - --enable=profile:security  # Checkers that warn for potentially vulnerable code. Contains all SEI Cert C/C++ rules.
+
+  # Enable guidelines
+  #- --enable=guideline:cwe-top-25-2024  # https://cwe.mitre.org/top25/
+  - --enable=guideline:memory-safety  # https://cwe.mitre.org/data/definitions/1399.html
+  - --enable=guideline:sei-cert-c  # https://wiki.sei.cmu.edu/confluence/display/c/SEI+CERT+C+Coding+Standard
+  #- --enable=guideline:misra-c  # https://www.misra.org.uk/
+  #- --enable=guideline:sei-cert-cpp  # https://wiki.sei.cmu.edu/confluence/pages/viewpage.action?pageId=88046682
+
+  # Disable severities
+  - --disable=severity:UNSPECIFIED  # Checker severity is not specified for a checker.
+  - --disable=severity:STYLE  # Against a specific coding guideline or could improve readability.
+  - --disable=severity:LOW  # Hard to read/understand or could be easily optimized.
+  #- --disable=severity:MEDIUM  # May not cause a run-time error (yet), but against intuition and hence prone to error.
+  #- --disable=severity:HIGH  # Will cause a run-time error.
+  #- --disable=severity:CRITICAL  # Currently used for indicating compilation errors.
+
+  # Disable checkers
+  - --disable=clang-diagnostic-unused-parameter  # Required by callbacks / fixed interface signatures
+  - --disable=clang-diagnostic-sign-compare  # Widespread size_t vs int comparisons
+  - --disable=clang-diagnostic-reserved-identifier  # Legacy global identifiers prefixed with '_'
+  - --disable=clang-diagnostic-missing-field-initializers  # Partial zero-init is intentional and relied upon
+  - --disable=bugprone-reserved-identifier  # Same legacy '_' identifier scheme as above
+  - --disable=cert-err33-c  # Many false positives; error returns are checked selectively
+  - --disable=cert-dcl51-cpp  # C++ rule irrelevant in C-only codebase
+  - --disable=concurrency-mt-unsafe  # Single-threaded by design (no pthreads / atomics)
+
+  # Analyzer configurations, see https://clang.llvm.org/docs/analyzer/user-docs/Options.html
+  - --analyzer-config=clangsa:unroll-loops=true
+  - --analyzer-config=clangsa:widen-loops=true
+  - --analyzer-config=clangsa:display-ctu-progress=true
+
+  # Checker configurations
+  - --checker-config=clang-tidy:google-readability-function-size:StatementThreshold=100
+
+  # Optional options
+  - --ctu  # Cross-Translation Unit analysis
+  - --report-hash=context-free-v2
+  - --clean
