@@ -30,8 +30,8 @@ PROJECT_CONFIG="${PROJECT_CCDIR}/config.yml"
 PROJECT_SKIPFILE="${PROJECT_CCDIR}/skipfile.txt"
 PROJECT_REPORT_DIR="${PROJECT_CCDIR}/report"
 PROJECT_REPORT_HTML_DIR="${PROJECT_CCDIR}/report-html"
-PROJECT_COMPILE_DB="compile_commands.json"
-PROJECT_BUILD_CMD="make force DEBUG=1"
+PROJECT_COMPILE_DB="${PROJECT_COMPILE_DB:-compile_commands.json}"
+PROJECT_BUILD_CMD="make clean && make" # default, can be overridden
 
 DOCKER=${DOCKER:-docker}
 DOCKER_NET="cctl-bridge" # makes possible the reach the server
@@ -179,6 +179,11 @@ network_status() {
 
 case "${1:-}" in
   b|build)
+    shift
+    if [ $# -gt 0 ]; then
+      PROJECT_BUILD_CMD="$*"
+    fi
+
     run CodeChecker log \
     --build "${PROJECT_BUILD_CMD}" \
     --output "${PROJECT_COMPILE_DB}"

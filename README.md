@@ -143,12 +143,58 @@ analyzed.
 ```bash
 cd ${PROJECT_DIR}
 
-cctl build         # build the project and generate compile_commands.json
-cctl analyze       # run CodeChecker analysis and produce reports
-cctl parse         # generate a static HTML report
-cctl server-up     # start the CodeChecker web server
-cctl store         # upload reports to the CodeChecker server
+cctl build [build-cmd] # build the project and generate compile_commands.json
+cctl analyze           # run CodeChecker analysis and produce reports
+cctl parse             # generate a static HTML report
+cctl server-up         # start the CodeChecker web server
+cctl store             # upload reports to the CodeChecker server
 ```
+
+---
+
+### Build command selection
+
+`cctl build` runs the project build **inside the Docker container** in
+order to generate `compile_commands.json`.
+
+By default, the following build command is used:
+
+```bash
+make clean && make
+```
+
+The build command can be overridden in two ways.
+
+#### Environment variable
+
+```bash
+export PROJECT_BUILD_CMD="cmake --build build"
+cctl build
+```
+
+This is useful for CI or when working with multiple projects.
+
+#### Command-line override
+
+```bash
+cctl build ninja -C build
+```
+
+When provided, the command-line argument takes precedence over the
+environment variable.
+
+
+#### Precedence order
+
+1. Command-line argument  
+2. `PROJECT_BUILD_CMD` environment variable  
+3. Built-in default
+
+The build command is passed verbatim to CodeChecker and executed inside
+the container. Ensure the Docker image contains all tools and
+dependencies required to build the project.
+
+---
 
 Open the web UI in a browser:
 
