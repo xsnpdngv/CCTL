@@ -56,16 +56,6 @@ BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "default" )"
 CC_STORE_NAME="${BRANCH}"
 
 
-# -----------------------------
-# CodeChecker server settings
-# -----------------------------
-SERVER_CONTAINER="codechecker-server"
-SERVER_PORT=8001
-SERVER_PRODUCT="inode6"
-
-CC_DATA_BASE="${XDG_DATA_HOME:-$HOME/.local/share}/codechecker"
-SERVER_WORKSPACE="$CC_DATA_BASE/workspace"
-
 run() {
   $DOCKER run "${COMMON_OPTS[@]}" "$IMAGE" "$@"
 }
@@ -77,6 +67,26 @@ runit() {
 run_nw() {
   $DOCKER run "${NW_OPTS[@]}" "$IMAGE" "$@"
 }
+
+cc_opt_if_file_exists() {
+  local opt="$1"
+  local path="$2"
+
+  if [ -f "$path" ]; then
+    echo "$opt" "$path"
+  fi
+}
+
+
+# -----------------------------
+# CodeChecker server settings
+# -----------------------------
+SERVER_CONTAINER="codechecker-server"
+SERVER_PORT=8001
+SERVER_PRODUCT="inode6"
+
+CC_DATA_BASE="${XDG_DATA_HOME:-$HOME/.local/share}/codechecker"
+SERVER_WORKSPACE="$CC_DATA_BASE/workspace"
 
 server_up() {
   mkdir -p "$SERVER_WORKSPACE"
@@ -177,8 +187,8 @@ case "${1:-}" in
     shift
     run CodeChecker analyze \
       "${PROJECT_COMPILE_DB}" \
-      --config "${PROJECT_CONFIG}" \
-      --skip "${PROJECT_SKIPFILE}" \
+      $(cc_opt_if_file_exists --config "${PROJECT_CONFIG}") \
+      $(cc_opt_if_file_exists --skip   "${PROJECT_SKIPFILE}") \
       --output "${PROJECT_REPORT_DIR}" \
       "$@"
     ;;
