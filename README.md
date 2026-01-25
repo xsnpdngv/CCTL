@@ -1,6 +1,6 @@
 % CodeChecker Control  
 % Tamás Dezső  
-% Jan 22, 2026
+% Jan 25, 2026
 <!-- pandoc README.md -o CodeChecker_Control.pdf \
     -V papersize:A4 \
     -V documentclass=report \
@@ -38,11 +38,9 @@ This is the shortest useful path. It assumes Docker is installed and
 # build the CodeChecker image (once)
 make -C /path/to/cctl image
 
-# prepare the project
-cd ${PROJECT_DIR}
-cp -r /path/to/cctl/codechecker ./
 
 # run analysis
+cd /path/to/c-project
 cctl build
 cctl analyze
 cctl parse
