@@ -1,6 +1,6 @@
 % CodeChecker Control  
 % Tamás Dezső  
-% Jan 25, 2026
+% Jan 26, 2026
 <!-- pandoc README.md -o CodeChecker_Control.pdf \
     -V papersize:A4 \
     -V documentclass=report \
@@ -38,9 +38,8 @@ This is the shortest useful path. It assumes Docker is installed and
 # build the CodeChecker image (once)
 make -C /path/to/cctl image
 
-
 # run analysis
-cd /path/to/c-project
+cd /path/to/target/project
 cctl build
 cctl analyze
 cctl parse
@@ -89,9 +88,11 @@ only provides the tooling.
 
 ### Build the Docker image
 
-Build the CodeChecker Docker image.  
-If required, customize the environment beforehand by editing
-`docker/Dockerfile`.
+Build the CodeChecker Control Docker image.  
+
+If necessary, customize the environment to match the requirements of the
+target project by editing `docker/Dockerfile.final` before building the
+image.
 
 ```bash
 make image
@@ -119,7 +120,7 @@ In the project to be analyzed, copy the sample CodeChecker configuration
 and adjust it as needed.
 
 ```bash
-cd ${PROJECT_DIR}
+cd /path/to/target/project
 cp -r /path/to/cctl/codechecker ./
 vi codechecker/config.yml
 vi codechecker/skipfile.txt
@@ -139,13 +140,13 @@ All commands below are executed **from the project directory** being
 analyzed.
 
 ```bash
-cd ${PROJECT_DIR}
+cd /path/to/target/project
 
 cctl build [build-cmd] # build the project and generate compile_commands.json
-cctl analyze           # run CodeChecker analysis and produce reports
-cctl parse             # generate a static HTML report
+cctl analyze [args]    # run CodeChecker analysis and produce reports
+cctl parse [args]      # generate a static HTML report
 cctl server-up         # start the CodeChecker web server
-cctl store             # upload reports to the CodeChecker server
+cctl store [args]      # upload reports to the CodeChecker server
 ```
 
 ---

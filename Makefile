@@ -6,11 +6,14 @@
 PLATFORM   ?= linux/arm64 # or linux/amd64
 IMAGE_NAME ?= cctl
 IMAGE_TAG  ?= ubuntu24.04
+IMAGE_BASE ?= $(IMAGE_NAME)-base:$(IMAGE_TAG)
 IMAGE      ?= $(IMAGE_NAME):$(IMAGE_TAG)
-DOCKERFILE ?= docker/Dockerfile
+DOCKERFILE_BASE  ?= docker/Dockerfile.base
+DOCKERFILE_FINAL ?= docker/Dockerfile.final
+
 DOCKER     ?= docker
 
-.PHONY: image export import help clean
+.PHONY: image image-base export import help clean
 
 all: help
 
@@ -21,10 +24,17 @@ help:
 	@echo "  import  Import the CodeChecker Docker image"
 	@echo "  clean   Remove the Docker image"
 
-image:
+image-base:
 	$(DOCKER) build \
 	  --platform $(PLATFORM) \
-	  -f $(DOCKERFILE) \
+	  -f $(DOCKERFILE_BASE) \
+	  -t $(IMAGE_BASE) \
+	  .
+
+image: image-base
+	$(DOCKER) build \
+	  --platform $(PLATFORM) \
+	  -f $(DOCKERFILE_FINAL) \
 	  -t $(IMAGE) \
 	  .
 

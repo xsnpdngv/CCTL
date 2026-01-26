@@ -1,0 +1,154 @@
+# syntax=docker/dockerfile:1
+FROM cctl-base:ubuntu24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PATH=/root/.local/bin:$PATH
+
+RUN set -e; \
+    PACKAGES="\
+        ca-certificates \
+        curl \
+        wget \
+        git \
+        make \
+        cmake \
+        ninja-build \
+        gcc \
+        g++ \
+        gdb \
+        clang \
+        clang-tools \
+        clang-tidy \
+        llvm \
+        cppcheck \
+        ccache \
+        openjdk-17-jre \
+        python3 \
+        python3-dev \
+        python3-venv \
+        python3-pip \
+        pipx \
+        libncurses-dev \
+        uuid-dev \
+        liblua5.3-dev \
+        libsctp-dev \
+        libssl-dev \
+        libxml2-dev \
+        nghttp2 \
+        libnghttp2-dev \
+        libcunit1 \
+        libcunit1-dev \
+        locales \
+        autoconf \
+        automake \
+        libtool \
+        pkg-config \
+    "; \
+    apt-get update && \
+    apt-get install --dry-run $PACKAGES && \
+    apt-get install -y $PACKAGES && \
+    rm -rf /var/lib/apt/lists/*
+
+
+RUN sed -i 's/^# *en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen \
+ && locale-gen \
+ && update-locale LANG=en_US.UTF-8
+
+
+# --------------------------------------------------
+# Build and install nghttp2
+# --------------------------------------------------
+# for target version, check:
+# grep VERSION /usr/local/include/nghttp2/nghttp2ver.h
+ARG NGHTTP2_VERSION=1.60.0
+
+RUN cd /tmp \
+ && curl -L \
+      https://github.com/nghttp2/nghttp2/releases/download/v${NGHTTP2_VERSION}/nghttp2-${NGHTTP2_VERSION}.tar.gz \
+      -o nghttp2-${NGHTTP2_VERSION}.tar.gz \
+ && tar xf nghttp2-${NGHTTP2_VERSION}.tar.gz \
+ && cd nghttp2-${NGHTTP2_VERSION} \
+ && autoreconf -fi \
+    ./configure \
+      --prefix=/usr/local \
+      --enable-lib-only \
+      --enable-shared \
+      --disable-static \
+ && make -j$(nproc) \
+ && make install \
+ && ldconfig \
+ && test -f /usr/local/include/nghttp2/nghttp2.h \
+ && test -f /usr/local/lib/libnghttp2.so \
+ && rm -rf /tmp/nghttp2-${NGHTTP2_VERSION} \
+           /tmp/nghttp2-${NGHTTP2_VERSION}.tar.gz
+
+
+# --------------------------------------------------
+# Build and install Lua 5.3.4 shared library
+# --------------------------------------------------
+ARG LUA_VERSION=5.3.4
+
+RUN set -e; \
+    cd /tmp; \
+    # Fetch Lua source
+    wget https://www.lua.org/ftp/lua-${LUA_VERSION}.tar.gz \
+ && tar xzf lua-${LUA_VERSION}.tar.gz \
+ && cd lua-${LUA_VERSION} \
+    # Enable PIC and shared library in src/Makefile
+ && sed -i \
+      -e 's/^CFLAGS=.*/CFLAGS= -O2 -Wall -fPIC -Wextra -DLUA_COMPAT_5_2 $(SYSCFLAGS) $(MYCFLAGS)/' \
+      -e 's/^#*LUA_SO=.*/LUA_SO=liblua.so/' \
+      -e 's/^ALL_T=.*/ALL_T= $(LUA_A) $(LUA_T) $(LUAC_T) $(LUA_SO)/' \
+      src/Makefile \
+    # Add shared library rule if not present
+ && grep -q '$(LUA_SO):' src/Makefile || \
+    printf '\n$(LUA_SO): $(CORE_O) $(LIB_O)\n\t$(CC) -o $@ -shared $?\n' >> src/Makefile \
+    # Enable installation of shared library in top-level Makefile
+ && sed -i 's/^TO_LIB=.*/TO_LIB= liblua.a liblua.so/' Makefile \
+    # Build for Linux
+ && make linux \
+    # Re-link with correct SONAME (exactly as in manual)
+ && cd src \
+ && gcc -std=gnu99 -Wl,-soname,liblua.so.5 \
+        -o liblua.so.${LUA_VERSION} \
+        -shared \
+        lapi.o lcode.o lctype.o ldebug.o ldo.o ldump.o lfunc.o lgc.o llex.o \
+        lmem.o lobject.o lopcodes.o lparser.o lstate.o lstring.o ltable.o \
+        ltm.o lundump.o lvm.o lzio.o lauxlib.o lbaselib.o lbitlib.o \
+        lcorolib.o ldblib.o liolib.o lmathlib.o loslib.o lstrlib.o \
+        ltablib.o lutf8lib.o loadlib.o linit.o \
+        -lm \
+    # Install into /usr/local/lib/include
+ && cp liblua.so.${LUA_VERSION} /usr/local/lib/ \
+ && cd /usr/local/lib \
+ && chown root:root liblua.so.${LUA_VERSION} \
+ && chmod 755 liblua.so.${LUA_VERSION} \
+ && ln -sf liblua.so.${LUA_VERSION} liblua.so.5 \
+ && ln -sf liblua.so.5 liblua.so \
+    # Ensure /usr/local/lib is in the dynamic linker path
+ && echo "/usr/local/lib" > /etc/ld.so.conf.d/lua.conf \
+ && ldconfig \
+    # Cleanup
+ && rm -rf /tmp/lua-${LUA_VERSION} /tmp/lua-${LUA_VERSION}.tar.gz
+
+RUN cp /usr/include/lua5.3/*.h /usr/include/
+
+RUN ldconfig -p | grep liblua.so.5
+RUN test -f /usr/local/lib/liblua.so.${LUA_VERSION}
+
+
+# --------------------------------------------------
+# Build and install Cheetah 3.0.0 (from source)
+# --------------------------------------------------
+ARG CHEETAH_VERSION=3.0.0
+
+RUN set -e; \
+    cd /tmp; \
+    wget https://files.pythonhosted.org/packages/source/C/Cheetah3/Cheetah3-${CHEETAH_VERSION}.tar.gz \
+ && tar xzf Cheetah3-${CHEETAH_VERSION}.tar.gz \
+ && cd Cheetah3-${CHEETAH_VERSION} \
+ && python3 setup.py build \
+ && python3 setup.py install \
+ && rm -rf /tmp/Cheetah3-${CHEETAH_VERSION} /tmp/Cheetah3-${CHEETAH_VERSION}.tar.gz
+
+RUN python3 -c "import Cheetah; print('Cheetah imported OK')"
