@@ -230,6 +230,10 @@ case "${1:-}" in
   sh|shell)
     runit bash
     ;;
+  c|cmd)
+    shift
+    run "$@"
+    ;;
   *)
     echo "Usage:"
     echo "  $0 b|build"
@@ -241,6 +245,7 @@ case "${1:-}" in
     echo "  $0 down|stop|server-down"
     echo "  $0 status|server-status"
     echo "  $0 sh|shell"
+    echo "  $0 c|cmd [command]"
     exit 1
     ;;
 esac
