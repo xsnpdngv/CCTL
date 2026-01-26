@@ -135,45 +135,48 @@ server_down() {
 }
 
 server_status() {
+  echo -n "Checking if container '$SERVER_CONTAINER' is running..."
   if $DOCKER ps --format '{{.Names}}' | grep -qx "$SERVER_CONTAINER"; then
-    echo "Container '$SERVER_CONTAINER' is running."
+    echo "OK"
 
     if ! network_status "$DOCKER_NET"; then
       return 1
     fi
 
     # Check container is attached to the network
+    echo -n "Checking if container is attached to inter-container bridge network..."
     if $DOCKER inspect \
         -f '{{json .NetworkSettings.Networks}}' \
         "$SERVER_CONTAINER" | grep -q "\"$DOCKER_NET\""; then
-      echo "Container is attached to inter-container bridge network."
+      echo "OK"
     else
-      echo "WARNING: Container is NOT attached to inter-container bridge network."
+      echo "FAILED: Container is NOT attached to inter-container bridge network."
       return 1
     fi
 
+    echo -n "Checking inter-container connectivity..."
     run_nw curl -sf "http://${SERVER_CONTAINER}:${SERVER_PORT}/" > /dev/null \
-      && echo "Inter-container connectivity: OK" \
-      || echo "Inter-container connectivity: FAILED"
+      && echo "OK" || echo "FAILED"
 
   elif $DOCKER ps -a --format '{{.Names}}' | grep -qx "$SERVER_CONTAINER"; then
-    echo "'$SERVER_CONTAINER' container exists but is stopped."
+    echo "FAILED: container exists but is stopped."
   else
-    echo "'$SERVER_CONTAINER' container does not exist."
+    echo "FAILED: container does not exist."
   fi
 }
 
 network_status() {
   local net="$1"
 
+  echo -n "Checking inter-container bridge network '$net'..."
   if ! $DOCKER network inspect "$net" >/dev/null 2>&1; then
-    echo "Docker network '$net' does NOT exist."
-    echo "Create it with:"
-    echo "  docker network create $net"
+    echo "MISSING"
+    # echo "Create it with:"
+    # echo "  docker network create $net"
     return 1
   fi
 
-  echo "Inter-container bridge network '$net' exists."
+  echo "OK"
   return 0
 }
 
