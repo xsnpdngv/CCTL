@@ -45,4 +45,4 @@ import:
 	$(DOCKER) load < $(IMAGE).tar.gz
 
 clean:
-	docker rmi -f $(IMAGE) 2>/dev/null || true
+	docker rmi -f $(IMAGE) $(IMAGE_BASE) 2>/dev/null || true
