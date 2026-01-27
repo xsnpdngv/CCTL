@@ -1,6 +1,6 @@
 % CodeChecker Control  
 % Tamás Dezső  
-% Jan 26, 2026
+% Jan 27, 2026
 <!-- pandoc README.md -o CodeChecker_Control.pdf \
     -V papersize:A4 \
     -V documentclass=report \
@@ -15,12 +15,12 @@
 
 # CodeChecker Control
 
-CCTL is a lightweight control tool and workflow driver for running
+It is a lightweight control tool and workflow driver for running
 **CodeChecker** inside Docker. It standardizes build capture, analysis,
 and report generation for local development and CI, while keeping the
 execution environment reproducible.
 
-CCTL focuses on:
+CodeChecker Control focuses on:
 
 - building and analyzing code in a consistent environment
 - detecting newly introduced defects
@@ -32,11 +32,11 @@ CCTL focuses on:
 ## Quick start
 
 This is the shortest useful path. It assumes Docker is installed and
-`cctl` is already on your `PATH`.
+`codechecker-ctl` is already on your `PATH`.
 
 ```bash
 # build the CodeChecker image (once)
-make -C /path/to/cctl image
+make -C /path/to/codechecker-ctl image
 
 # run analysis
 cd /path/to/target/project
@@ -57,7 +57,7 @@ a CodeChecker server.
 
 ## Architecture overview
 
-CCTL builds a single Docker image that can be used in two modes:
+CodeChecker Control builds a single Docker image that can be used in two modes:
 - **CLI mode** for analysis and report generation
 - **Server mode** for browsing and storing results
 
@@ -102,12 +102,12 @@ This is typically done once per version update.
 
 ---
 
-### Make `cctl` available in the shell
+### Make CodeChecker Control available in the shell
 
-Add the `cctl` entry point to your `PATH` (for example via `~/.profile`):
+Add the `codechecker-ctl` entry point to your `PATH` (for example via `~/.profile`):
 
 ```bash
-export PATH="/path/to/cctl/bin:$PATH"
+export PATH="/path/to/codechecker-ctl/bin:$PATH"
 ```
 
 Reload the shell or source the profile for the change to take effect.
@@ -121,7 +121,7 @@ and adjust it as needed.
 
 ```bash
 cd /path/to/target/project
-cp -r /path/to/cctl/codechecker ./
+cp -r /path/to/codechecker-ctl/codechecker ./
 vi codechecker/config.yml
 vi codechecker/skipfile.txt
 ```
