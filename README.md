@@ -31,12 +31,14 @@ CodeChecker Control focuses on:
 
 ## Quick start
 
-This is the shortest useful path. It assumes Docker is installed and
-`codechecker-ctl` is already on your `PATH`.
+This is the shortest useful path. It assumes Docker is installed.
 
 ```bash
-# build the CodeChecker image (once)
-make -C /path/to/codechecker-ctl image
+git clone https://github.com/xsnpdngv/codechecker-ctl.git
+cd codechecker-ctl
+
+make image                     # build the CodeChecker image
+alias cctl="$(pwd)/bin/cctl"   # make cctl script available
 
 # run analysis
 cd /path/to/target/project
