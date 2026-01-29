@@ -69,7 +69,7 @@ RUN cd /tmp \
  && tar xf nghttp2-${NGHTTP2_VERSION}.tar.gz \
  && cd nghttp2-${NGHTTP2_VERSION} \
  && autoreconf -fi \
-    ./configure \
+ && ./configure \
       --prefix=/usr/local \
       --enable-lib-only \
       --enable-shared \
