@@ -28,6 +28,7 @@ PROJECT_ROOT="$(pwd)" # "$(cd "$(dirname "$0")" && pwd)"
 PROJECT_CCDIR="codechecker"
 PROJECT_CONFIG="${PROJECT_CCDIR}/config.yml"
 PROJECT_SKIPFILE="${PROJECT_CCDIR}/skipfile.txt"
+PROJECT_TIDY_ARGS_CFG="${PROJECT_CCDIR}/tidyargs.cfg"
 PROJECT_REPORT_DIR="${PROJECT_CCDIR}/report"
 PROJECT_REPORT_HTML_DIR="${PROJECT_CCDIR}/report-html"
 PROJECT_COMPILE_DB="${PROJECT_COMPILE_DB:-compile_commands.json}"
@@ -198,6 +199,18 @@ case "${1:-}" in
       $(cc_opt_if_file_exists --config "${PROJECT_CONFIG}") \
       $(cc_opt_if_file_exists --skip   "${PROJECT_SKIPFILE}") \
       --output "${PROJECT_REPORT_DIR}" \
+      --jobs 4 \
+      "$@"
+    ;;
+  t|tidy)
+    shift
+    run CodeChecker analyze \
+      "${PROJECT_COMPILE_DB}" \
+      --analyzers clang-tidy \
+      $(cc_opt_if_file_exists --tidyargs "${PROJECT_TIDY_ARGS_CFG}") \
+      $(cc_opt_if_file_exists --skip     "${PROJECT_SKIPFILE}") \
+      --output "${PROJECT_REPORT_DIR}" \
+      --jobs 4 \
       "$@"
     ;;
   p|parse)
@@ -209,11 +222,12 @@ case "${1:-}" in
       "$@"
     ;;
   s|store)
+    shift
     run_nw CodeChecker store \
       "${PROJECT_REPORT_DIR}" \
       --trim-path-prefix "${WORKDIR}" \
-      --name "${CC_STORE_NAME}" \
-      --url http://${SERVER_CONTAINER}:${SERVER_PORT}/${SERVER_PRODUCT}
+      --url http://${SERVER_CONTAINER}:${SERVER_PORT}/${SERVER_PRODUCT} \
+      --name "${CC_STORE_NAME}$@"
     ;;
   l|list)
     run CodeChecker analyzers
@@ -238,8 +252,9 @@ case "${1:-}" in
     echo "Usage:"
     echo "  $0 b|build"
     echo "  $0 a|analyze [args]"
+    echo "  $0 t|tidy [args]"
     echo "  $0 p|parse [args]"
-    echo "  $0 s|store [args]"
+    echo "  $0 s|store [name-postfix]"
     echo "  $0 l|list"
     echo "  $0 up|start|server-up"
     echo "  $0 down|stop|server-down"
