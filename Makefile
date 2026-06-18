@@ -3,9 +3,10 @@
 # Main Makefile
 # ============================================================================
 
-PLATFORM   ?= linux/arm64 # or linux/amd64
+PLATFORM   ?= linux/amd64
+#PLATFORM   ?= linux/arm64
 IMAGE_NAME ?= cctl
-IMAGE_TAG  ?= ubuntu24.04
+IMAGE_TAG  ?= ubuntu26.04
 IMAGE_BASE ?= $(IMAGE_NAME)-base:$(IMAGE_TAG)
 IMAGE      ?= $(IMAGE_NAME):$(IMAGE_TAG)
 DOCKERFILE_BASE  ?= docker/Dockerfile.base

@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM cctl-base:ubuntu24.04
+FROM cctl-base:ubuntu26.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PATH=/root/.local/bin:$PATH
@@ -9,6 +9,7 @@ RUN set -e; \
         ca-certificates \
         curl \
         wget \
+        rsync \
         git \
         make \
         cmake \
@@ -43,6 +44,7 @@ RUN set -e; \
         automake \
         libtool \
         pkg-config \
+        #   jsonnet \
     "; \
     apt-get update && \
     apt-get install --dry-run $PACKAGES && \
@@ -151,4 +153,35 @@ RUN set -e; \
  && python3 setup.py install \
  && rm -rf /tmp/Cheetah3-${CHEETAH_VERSION} /tmp/Cheetah3-${CHEETAH_VERSION}.tar.gz
 
+
 RUN python3 -c "import Cheetah; print('Cheetah imported OK')"
+# --------------------------------------------------
+# Install go-jsonnet (prebuilt release from GitHub)
+# --------------------------------------------------
+# Provides: jsonnet, jsonnet-deps, jsonnetfmt, jsonnet-lint
+# Release page: https://github.com/google/go-jsonnet/releases
+ARG GO_JSONNET_VERSION=0.22.0
+# BuildKit-provided arg; values: amd64 | arm64 | ...
+ARG TARGETARCH
+
+RUN set -eux; \
+    case "${TARGETARCH:-amd64}" in \
+      amd64|arm64|386|armv6) GJ_ARCH="${TARGETARCH:-amd64}" ;; \
+      *) echo "Unsupported TARGETARCH='${TARGETARCH}' for go-jsonnet" >&2; exit 1 ;; \
+    esac; \
+    cd /tmp; \
+    TARBALL="go-jsonnet_${GO_JSONNET_VERSION}_linux_${GJ_ARCH}.tar.gz"; \
+    URL="https://github.com/google/go-jsonnet/releases/download/v${GO_JSONNET_VERSION}/${TARBALL}"; \
+    curl -fL "${URL}" -o "${TARBALL}"; \
+    mkdir -p go-jsonnet; \
+    tar -xzf "${TARBALL}" -C go-jsonnet; \
+    install -m 0755 \
+      go-jsonnet/jsonnet \
+      go-jsonnet/jsonnet-deps \
+      go-jsonnet/jsonnetfmt \
+      go-jsonnet/jsonnet-lint \
+      /usr/local/bin/; \
+    rm -rf "/tmp/${TARBALL}" /tmp/go-jsonnet; \
+    jsonnet --version
+
+
