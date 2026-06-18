@@ -140,9 +140,11 @@ RUN test -f /usr/local/lib/liblua.so.${LUA_VERSION}
 
 
 # --------------------------------------------------
-# Build and install Cheetah 3.0.0 (from source)
+# Build and install Cheetah 3 (from source)
 # --------------------------------------------------
-ARG CHEETAH_VERSION=3.0.0
+# Note: versions <= 3.0.x still `import imp`, which Python 3.12 removed.
+# 3.2.x dropped that, so anything 3.2.0+ works on Ubuntu 24.04 (py3.12).
+ARG CHEETAH_VERSION=3.2.6.post1
 
 RUN set -e; \
     cd /tmp; \

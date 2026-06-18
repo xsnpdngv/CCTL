@@ -1,0 +1,26 @@
+{
+  "authentication": {
+    "enabled": true,
+    "realm_name": "CodeChecker Server (cctl)",
+    "realm_error": "Invalid username or password",
+    "logins_until_cleanup": 30,
+    "session_lifetime": 60000,
+    "refresh_time": 60,
+    "super_user": "admin",
+    "method_dictionary": {
+      "enabled": true,
+      "auths": [
+        "admin:admin"
+      ],
+      "groups": {
+        "admin": ["admin"]
+      }
+    },
+    "method_pam": {
+      "enabled": false
+    },
+    "method_ldap": {
+      "enabled": false
+    }
+  }
+}

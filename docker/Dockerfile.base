@@ -29,8 +29,48 @@ RUN set -e; \
 
 
 # ---- CodeChecker ----
-RUN pipx install codechecker \
+# Install via pipx into a system-wide location so the launcher and its
+# venv are readable by any container user. The image is started with
+# `--user` (mapped to the host uid) by cctl, which means the default
+# /root/.local (mode 0700) is unreachable. PIPX_BIN_DIR places the
+# CodeChecker launcher on /usr/local/bin, which is already on PATH.
+ENV PIPX_HOME=/opt/pipx \
+    PIPX_BIN_DIR=/usr/local/bin
+ARG CODECHECKER_VERSION=6.27.3
+RUN pipx install "codechecker==${CODECHECKER_VERSION}" \
  && CodeChecker version
+
+
+# --------------------------------------------------
+# Default CodeChecker authentication
+# --------------------------------------------------
+# Bake a default `server_config.json` that turns on basic
+# (dictionary-based) authentication and a matching client-side
+# `passwords.json`. The entrypoint script:
+#   * seeds the bind-mounted server workspace with the config on first
+#     run, and
+#   * points the client at the baked credentials via CC_PASS_FILE when
+#     the host has not provisioned ~/.codechecker/passwords.json.
+#
+# Default credentials: admin / admin
+# Change them by editing (on the host):
+#   ~/.local/share/codechecker/workspace/server_config.json   (server)
+#   ~/.codechecker/passwords.json                             (client)
+
+RUN mkdir -p /etc/codechecker
+COPY docker/server_config.json /etc/codechecker/server_config.json
+COPY docker/passwords.json     /etc/codechecker/passwords.json
+# 644 (not 600): these are baked-in *defaults* containing the public
+# admin/admin credentials. Keeping them world-readable lets the
+# container run as an unprivileged --user (mapped to the host uid) and
+# still read them from the entrypoint.
+RUN chmod 644 /etc/codechecker/server_config.json \
+              /etc/codechecker/passwords.json
+
+COPY docker/entrypoint.sh /usr/local/bin/cctl-entrypoint.sh
+RUN chmod 0755 /usr/local/bin/cctl-entrypoint.sh
+
+ENTRYPOINT ["/usr/local/bin/cctl-entrypoint.sh"]
 
 
 WORKDIR /work
